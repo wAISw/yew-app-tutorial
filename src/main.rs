@@ -1,54 +1,13 @@
 use gloo_net::http::Request;
-use serde::Deserialize;
 use yew::prelude::*;
 use yew::{function_component, html, Html};
+mod structs;
+mod video_details;
+mod video_list;
+use structs::*;
 
-#[derive(Clone, PartialEq, Deserialize)]
-struct Video {
-    id: usize,
-    title: String,
-    speaker: String,
-    url: String,
-}
-
-#[derive(Properties, PartialEq)]
-struct VideosListProps {
-    videos: Vec<Video>,
-    on_click: Callback<Video>,
-}
-
-#[function_component(VideosList)]
-fn videos_list(VideosListProps { videos, on_click }: &VideosListProps) -> Html {
-    let on_click = on_click.clone();
-    videos.iter().map(|video| {
-        let on_video_select = {
-            let on_click = on_click.clone();
-            let video = video.clone();
-            Callback::from(move |_| {
-                on_click.emit(video.clone())
-            })
-        };
-
-        html! {
-            <p key={video.id} onclick={on_video_select}>{format!("{}: {}", video.speaker, video.title)}</p>
-        }
-    }).collect()
-}
-
-#[derive(Properties, PartialEq)]
-struct VideosDetailsProps {
-    video: Video,
-}
-
-#[function_component(VideoDetails)]
-fn video_details(VideosDetailsProps { video }: &VideosDetailsProps) -> Html {
-    html! {
-        <div>
-            <h3>{ video.title.clone() }</h3>
-            <img src="https://via.placeholder.com/640x360.png?text=Video+Player+Placeholder" alt="video thumbnail" />
-        </div>
-    }
-}
+use crate::video_details::VideoDetails;
+use crate::video_list::VideosList;
 
 #[function_component(App)]
 fn app() -> Html {
@@ -66,6 +25,7 @@ fn app() -> Html {
                         .json()
                         .await
                         .unwrap();
+                    print!("{:?}", fetched_videos);
                     videos.set(fetched_videos);
                 });
                 || ()
@@ -91,7 +51,10 @@ fn app() -> Html {
             <h1>{ "RustConf Explorer" }</h1>
             <div>
                 <h3>{"Videos to watch"}</h3>
-                <VideosList videos={(*videos).clone()} on_click={on_video_select.clone()} />
+                <VideosList
+                    videos={(*videos).clone()}
+                    on_click={on_video_select.clone()}
+                />
             </div>
             { for details }
         </>
